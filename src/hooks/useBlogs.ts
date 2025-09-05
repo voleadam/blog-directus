@@ -14,6 +14,15 @@ export const useBlogs = () => {
         .select('*, picture_data:picture(id, filename_disk)')
         .eq('status', 'published')
         .order('date_created', { ascending: false })
+
+      if (error) throw error
+
+      const processedBlogs = await Promise.all(
+        (data || []).map(async (blog) => {
+          let picture_url = null
+          
+          if (blog.picture_data?.filename_disk) {
+            try {
               const { data: signedUrlData } = await supabase.storage
                 .from('Pictures')
                 .createSignedUrl(blog.picture_data.filename_disk, 60 * 60) // 1 hour expiry
