@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase, Blog } from '../lib/supabase'
 
+const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL || 'http://localhost:8055'
+
 export const useBlogs = () => {
   const [blogs, setBlogs] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)
@@ -11,36 +13,25 @@ export const useBlogs = () => {
       setLoading(true)
       const { data, error } = await supabase
         .from('Blogs')
-        .select('*, picture_data:picture(id, filename_disk)')
+        .select('*, picture_data:picture(id)')
         .eq('status', 'published')
         .order('date_created', { ascending: false })
 
       if (error) throw error
 
-      const processedBlogs = await Promise.all(
-        (data || []).map(async (blog) => {
-          let picture_url = null
-          
-          if (blog.picture_data?.filename_disk) {
-            try {
-              const { data: signedUrlData } = await supabase.storage
-                .from('Pictures')
-                .createSignedUrl(blog.picture_data.filename_disk, 60 * 60) // 1 hour expiry
-              
-              if (signedUrlData?.signedUrl) {
-                picture_url = signedUrlData.signedUrl
-              }
-            } catch (urlError) {
-              console.warn(`Failed to generate signed URL for blog ${blog.id}:`, urlError)
-            }
-          }
-          
-          return {
-            ...blog,
-            picture_url
-          }
-        })
-      )
+      const processedBlogs = (data || []).map((blog) => {
+        let picture_url = null
+        
+        // Use Directus Assets endpoint if we have a picture ID
+        if (blog.picture_data?.id) {
+          picture_url = `${DIRECTUS_URL}/assets/${blog.picture_data.id}?width=800&format=webp&quality=80`
+        }
+        
+        return {
+          ...blog,
+          picture_url
+        }
+      })
       
       setBlogs(processedBlogs)
     } catch (err) {

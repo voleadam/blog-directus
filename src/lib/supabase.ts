@@ -18,7 +18,6 @@ export interface Blog {
   picture_url: string | null // Constructed public URL
   picture_data?: {
     id: string;
-    filename_disk: string;
   } | null;
   user_created: string
   user_updated: string
