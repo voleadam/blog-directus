@@ -23,12 +23,23 @@ export const useBlogs = () => {
         // Generate Supabase signed URL if we have picture data
         if (blog.picture_data && blog.picture_data.filename_disk) {
           try {
+            // First check if the file exists
+            const { error: headError } = await supabase.storage
+              .from('Pictures')
+              .head(blog.picture_data.filename_disk)
+            
+            if (headError) {
+              // File doesn't exist, skip creating signed URL
+              picture_url = null
+            } else {
+              // File exists, create signed URL
             const { data: signedData, error: signedError } = await supabase.storage
               .from('Pictures')
               .createSignedUrl(blog.picture_data.filename_disk, 60 * 60) // 1 hour
             
             if (!signedError && signedData?.signedUrl) {
               picture_url = signedData.signedUrl
+            }
             }
           } catch (err) {
             console.warn('Failed to create signed URL for image:', err)
