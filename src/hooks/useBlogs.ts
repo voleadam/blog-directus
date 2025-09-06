@@ -1,19 +1,34 @@
 import { useState, useEffect } from 'react'
 import { Blog } from '../lib/supabase'
 
-const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL || 'http://localhost:8055'
+const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL
 
 export const useBlogs = () => {
   const [blogs, setBlogs] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const checkCollections = async () => {
+    try {
+      const response = await fetch(`${DIRECTUS_URL}/collections`)
+      if (response.ok) {
+        const collections = await response.json()
+        console.log('Available collections:', collections)
+      }
+    } catch (err) {
+      console.log('Collections check failed:', err)
+    }
+  }
+
   const fetchBlogs = async () => {
     try {
       setLoading(true)
       
+      // Sanity check collections
+      await checkCollections()
+      
       const response = await fetch(
-        `${DIRECTUS_URL}/items/blog?fields=id,title,content,content_markdown,author,category,date_created,picture.id&sort=-date_created&filter[status][_neq]=draft`
+        `${DIRECTUS_URL}/items/blog?fields=id,title,excerpt,picture.id&sort=-date_created`
       )
       
       if (!response.ok) {
