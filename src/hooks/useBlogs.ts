@@ -17,7 +17,7 @@ export const useBlogs = () => {
 
       if (error) throw error
 
-      const processedBlogs = (data || []).map((blog) => {
+      const processedBlogs = await Promise.all((data || []).map(async (blog) => {
         let picture_url = null
         
         // Generate Supabase signed URL if we have picture data
@@ -39,7 +39,7 @@ export const useBlogs = () => {
           ...blog,
           picture_url
         }
-      })
+      }))
       
       setBlogs(processedBlogs)
     } catch (err) {
