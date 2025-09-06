@@ -14,13 +14,9 @@ export interface Blog {
   date_updated: string | null
   title: string | null
   content: string | null
-  picture: string | null // UUID from database
+  picture: { id: string } | null // Directus file relation
   content_markdown: string
   category: string | null
   author: string | null
   picture_url: string | null // Constructed public URL
-  picture_data?: {
-    id: string;
-    filename_disk: string;
-  } | null;
 }
