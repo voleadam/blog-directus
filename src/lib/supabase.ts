@@ -6,21 +6,21 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export interface Blog {
-  id: string
-  Title: string
-  excerpt: string
-  content_markdown: string
-  category: string
-  date_created: string
-  date_updated: string
-  author: string
+  id: number
+  status: string
+  user_created: string | null
+  date_created: string | null
+  user_updated: string | null
+  date_updated: string | null
+  title: string | null
+  content: string | null
   picture: string | null // UUID from database
+  content_markdown: string
+  category: string | null
+  author: string | null
   picture_url: string | null // Constructed public URL
   picture_data?: {
     id: string;
+    filename_disk: string;
   } | null;
-  user_created: string
-  user_updated: string
-  status: string
-  sort: number
 }

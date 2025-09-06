@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase, Blog } from '../lib/supabase'
 
-const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL || 'http://localhost:8055'
-
 export const useBlogs = () => {
   const [blogs, setBlogs] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)
@@ -12,9 +10,9 @@ export const useBlogs = () => {
     try {
       setLoading(true)
       const { data, error } = await supabase
-        .from('Blogs')
-        .select('*, picture_data:picture(id)')
-        .eq('status', 'published')
+        .from('blog')
+        .select('*, picture_data:picture(id, filename_disk)')
+        .neq('status', 'draft')
         .order('date_created', { ascending: false })
 
       if (error) throw error
@@ -22,9 +20,19 @@ export const useBlogs = () => {
       const processedBlogs = (data || []).map((blog) => {
         let picture_url = null
         
-        // Use Directus Assets endpoint if we have a picture ID
-        if (blog.picture_data?.id) {
-          picture_url = `${DIRECTUS_URL}/assets/${blog.picture_data.id}?width=800&format=webp&quality=80`
+        // Generate Supabase signed URL if we have picture data
+        if (blog.picture_data && blog.picture_data.filename_disk) {
+          try {
+            const { data: signedData, error: signedError } = await supabase.storage
+              .from('Pictures')
+              .createSignedUrl(blog.picture_data.filename_disk, 60 * 60) // 1 hour
+            
+            if (!signedError && signedData?.signedUrl) {
+              picture_url = signedData.signedUrl
+            }
+          } catch (err) {
+            console.warn('Failed to create signed URL for image:', err)
+          }
         }
         
         return {
@@ -46,13 +54,13 @@ export const useBlogs = () => {
 
     // Set up real-time subscription
     const channel = supabase
-      .channel('Blogs-changes')
+      .channel('blog-changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'Blogs'
+          table: 'blog'
         },
         () => {
           fetchBlogs()

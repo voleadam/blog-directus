@@ -8,7 +8,7 @@ interface BlogCardProps {
 
 const BlogCard: React.FC<BlogCardProps> = ({ blog, className = "" }) => {
   const formatReadTime = (content: string) => {
-    if (!content || typeof content !== 'string') {
+    if (!content || typeof content !== 'string' || content.trim() === '') {
       return '1 min read';
     }
     const wordsPerMinute = 200;
@@ -18,6 +18,9 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog, className = "" }) => {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) {
+      return 'No date';
+    }
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -48,19 +51,19 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog, className = "" }) => {
         <div className="mt-4 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-neutral-500 uppercase tracking-wider">
-              {blog.category}
+              {blog.category || 'Uncategorized'}
             </span>
             <span className="text-xs text-neutral-400">
-              {formatReadTime(blog.content_markdown)}
+              {formatReadTime(blog.content || blog.content_markdown)}
             </span>
           </div>
           
           <h2 className="text-lg font-semibold text-neutral-900 group-hover:text-accent-blue transition-colors duration-200 leading-tight">
-            {blog.Title}
+            {blog.title || 'Untitled'}
           </h2>
           
           <p className="text-sm text-neutral-600 line-clamp-3 leading-relaxed">
-            {blog.excerpt}
+            {blog.content_markdown || blog.content || 'No content available'}
           </p>
           
           <div className="pt-2 flex items-center justify-between">
@@ -68,8 +71,8 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog, className = "" }) => {
               Read more
             </span>
             <div className="text-xs text-neutral-400">
-              <span>By {blog.author}</span>
-              <span className="ml-2">• {formatDate(blog.date_created)}</span>
+              <span>By {blog.author || 'Unknown'}</span>
+              <span className="ml-2">• {formatDate(blog.date_created || '')}</span>
             </div>
           </div>
         </div>
